@@ -1,0 +1,49 @@
+{
+  "name": "react-dp",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": "tstreamDOTh",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/polyfill": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-react": "^7.0.0",
+    "@storybook/addon-actions": "^5.3.18",
+    "@storybook/addon-links": "^5.3.18",
+    "@storybook/addons": "^5.3.18",
+    "@storybook/react": "^5.3.18",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-eslint": "^9.0.0",
+    "babel-jest": "^24.8.0",
+    "babel-loader": "^8.0.4",
+    "babel-preset-airbnb": "^2.1.1",
+    "css-loader": "^2.1.1",
+    "deepmerge": "^1.1.0",
+    "eslint": "^5.9.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-react": "^6.3.0",
+    "husky": "^0.14.3",
+    "jest": "^24.8.0",
+    "js-beautify": "^1.7.5",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
+    "sass-loader": "^6.0.3",
+    "style-loader": "^0.16.1",
+    "uglifyjs-webpack-plugin": "^2.0.1",
+    "webpack": "^4.21.0",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.9",
+    "why-did-you-update": "^0.1.1"
+  },
+  "peerDependencies": {
+    "react": "^0.14.0 || ^15.0.1 || ^16.0.0",
+    "react-dom": "^0.14.0 || ^15.0.1 || ^16.0.0"
+  },
+  "dependencies": {}
+}
