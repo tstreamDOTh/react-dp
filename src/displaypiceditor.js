@@ -1,5 +1,6 @@
 'use strict';
 import React from 'react';
+import { noop } from './utils';
 
 const getClient = (event) => {
   if (event.clientX) {
@@ -39,6 +40,7 @@ export default class DisplayPicEditor extends React.Component {
     if (!this.animationFired) {
       this.animationStarted = true;
       requestAnimationFrame(() => {
+        this.animationStarted = false;
         const { size } = this.props;
         const { startPointX, startPointY, imagePositionX, imagePositionY, offsetY, offsetX } = this.state;
 
@@ -50,27 +52,25 @@ export default class DisplayPicEditor extends React.Component {
         const { height: imageHeight, width: imageWidth } = this.image.getBoundingClientRect();
 
         if (calculatedOffsetX + imagePositionX > 0) {
-          calculatedOffsetX = offsetX;
+          calculatedOffsetX = -imagePositionX;
         }
 
         if (calculatedOffsetY + imagePositionY > 0) {
-          calculatedOffsetY = offsetY;
+          calculatedOffsetY = -imagePositionY;
         }
 
         if (calculatedOffsetX + imagePositionX < -(imageWidth - size)) {
-          calculatedOffsetX = offsetX;
+          calculatedOffsetX = -(imageWidth - size) - imagePositionX;
         }
 
         if (calculatedOffsetY + imagePositionY < -(imageHeight - size)) {
-          calculatedOffsetY = offsetY;
+          calculatedOffsetY = -(imageHeight - size) - imagePositionY;
         }
 
         this.setState({
           offsetX: calculatedOffsetX,
           offsetY: calculatedOffsetY,
         });
-
-        this.animationStarted = false;
       });
     }
   }
@@ -89,8 +89,6 @@ export default class DisplayPicEditor extends React.Component {
   componentDidMount() {
     this.interactionZone.addEventListener('mousedown', this.onDragStart);
     this.interactionZone.addEventListener('touchstart', this.onDragStart);
-    const { height: imageHeight, width: imageWidth } = this.image.getBoundingClientRect();
-    this.setState({ imageHeight, imageWidth });
   }
 
   componentWillUnmount() {
@@ -99,26 +97,50 @@ export default class DisplayPicEditor extends React.Component {
   }
 
   saveAsImage() {
-    const { size, src } = this.props;
+    const { size, src, overlay, enableDownload = true, onExportCallback = noop } = this.props;
     const { imagePositionX, imagePositionY } = this.state;
+    const { height: imageHeight, width: imageWidth } = this.image.getBoundingClientRect();
 
     const canvas = document.createElement('canvas');
     var context = canvas.getContext('2d');
     context.canvas.width = size;
     context.canvas.height = size;
 
-    var img = new Image();
+    if (enableDownload) {
+      var baseImage = new Image();
 
-    img.onload = () => {
-      context.drawImage(img, imagePositionX, imagePositionY);
-      console.log(canvas.toDataURL());
-    };
-    img.setAttribute('crossorigin', 'anonymous');
-    img.setAttribute('src', src);
+      baseImage.onload = () => {
+        context.drawImage(baseImage, imagePositionX, imagePositionY, imageWidth, imageHeight);
+        var overlayImage = new Image();
+
+        if (overlay) {
+          overlayImage.onload = () => {
+            context.drawImage(overlayImage, 0, 0, size, size);
+
+            window.location.href = canvas.toDataURL().replace('image/png', 'image/octet-stream');
+          };
+          overlayImage.setAttribute('crossorigin', 'anonymous');
+          overlayImage.setAttribute('src', overlay);
+        } else {
+          window.location.href = canvas.toDataURL().replace('image/png', 'image/octet-stream');
+        }
+      };
+
+      baseImage.setAttribute('crossorigin', 'anonymous');
+      baseImage.setAttribute('src', src);
+    }
+
+    onExportCallback({
+      imagePositionX,
+      imagePositionY,
+      imageWidth,
+      imageHeight,
+      size,
+    });
   }
 
   render() {
-    const { src, size, boundryOffset = 20, ref } = this.props;
+    const { src, size, boundryOffset = 20, ref, overlay } = this.props;
     const { imagePositionX, imagePositionY, offsetX, offsetY, isImageLoaded, isPotrait } = this.state;
     return (
       <div
@@ -154,10 +176,28 @@ export default class DisplayPicEditor extends React.Component {
               ...(isPotrait ? { width: '100%' } : { height: '100%' }),
               display: isImageLoaded ? 'initial' : 'none',
               position: 'absolute',
-              transform: `translate(${imagePositionX + offsetX}px, ${imagePositionY + offsetY}px)`,
+              top: imagePositionY,
+              left: imagePositionX,
+              transform: `translate(${offsetX}px, ${offsetY}px)`,
             }}
           />
+          {overlay && (
+            <img
+              draggable={false}
+              src={overlay}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                height: '100%',
+                width: '100%',
+                objectFit: 'contain',
+                pointerEvents: 'none',
+              }}
+            />
+          )}
         </div>
+
         <div
           style={{
             position: 'absolute',
