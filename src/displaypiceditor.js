@@ -1,6 +1,14 @@
 'use strict';
 import React from 'react';
 
+const getClient = (event) => {
+  if (event.clientX) {
+    return event;
+  } else {
+    return event.touches[0];
+  }
+};
+
 export default class DisplayPicEditor extends React.Component {
   constructor(props) {
     super(props);
@@ -14,7 +22,7 @@ export default class DisplayPicEditor extends React.Component {
     this.onDragEnd = this.onDragEnd.bind(this);
   }
 
-  onDragEnd() {
+  onDragEnd(event) {
     const { offsetX, offsetY, imagePositionX, imagePositionY } = this.state;
     this.setState({
       offsetX: 0,
@@ -23,17 +31,21 @@ export default class DisplayPicEditor extends React.Component {
       imagePositionY: imagePositionY + offsetY,
     });
     document.removeEventListener('mousemove', this.onDrag);
+    document.removeEventListener('touchmove', this.onDrag);
   }
 
   onDrag(event) {
+    event.preventDefault();
     if (!this.animationFired) {
       this.animationStarted = true;
       requestAnimationFrame(() => {
         const { size } = this.props;
         const { startPointX, startPointY, imagePositionX, imagePositionY, offsetY, offsetX } = this.state;
 
-        let calculatedOffsetX = event.clientX - startPointX;
-        let calculatedOffsetY = event.clientY - startPointY;
+        const { clientX, clientY } = getClient(event);
+
+        let calculatedOffsetX = clientX - startPointX;
+        let calculatedOffsetY = clientY - startPointY;
 
         const { height: imageHeight, width: imageWidth } = this.image.getBoundingClientRect();
 
@@ -65,19 +77,25 @@ export default class DisplayPicEditor extends React.Component {
 
   onDragStart(event) {
     this.setState({
-      startPointX: event.clientX,
-      startPointY: event.clientY,
+      startPointX: getClient(event).clientX,
+      startPointY: getClient(event).clientY,
     });
-    document.addEventListener('mousemove', this.onDrag);
+    document.addEventListener('mousemove', this.onDrag, { passive: false });
     document.addEventListener('mouseup', this.onDragEnd);
+    document.addEventListener('touchmove', this.onDrag, { passive: false });
+    document.addEventListener('touchend', this.onDragEnd);
   }
 
   componentDidMount() {
     this.interactionZone.addEventListener('mousedown', this.onDragStart);
+    this.interactionZone.addEventListener('touchstart', this.onDragStart);
+    const { height: imageHeight, width: imageWidth } = this.image.getBoundingClientRect();
+    this.setState({ imageHeight, imageWidth });
   }
 
   componentWillUnmount() {
     document.removeEventListener('mouseup', this.onDragEnd);
+    document.removeEventListener('touchend', this.onDragEnd);
   }
 
   saveAsImage() {
